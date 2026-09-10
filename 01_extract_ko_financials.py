@@ -1227,25 +1227,25 @@ def extract_year(
     records.append(q3)
 
     # ---------------------------------------------------------------
-    # Q4 = FY - Q3 standalone
+    # Q4 = FY - Q1 - Q2 - Q3 standalone
     # ---------------------------------------------------------------
     q4_values = {}
 
+    q1_values = next(r for r in records if r["fiscal_year"] == year and r["period"] == "Q1")
+    q2_values = next(r for r in records if r["fiscal_year"] == year and r["period"] == "Q2")
+
     for name in FLOW_CONCEPTS:
-        if name in {
-            "eps_diluted",
-            "diluted_shares",
-        }:
+        if name in {"eps_diluted", "diluted_shares"}:
             q4_values[name] = None
             continue
 
         fy = fy_values.get(name)
+        q1 = q1_values.get(name)
+        q2 = q2_values.get(name)
         q3 = q3_values.get(name)
-
         q4_values[name] = (
-            fy - q3
-            if fy is not None
-            and q3 is not None
+            fy - q1 - q2 - q3
+            if all(v is not None for v in (fy, q1, q2, q3))
             else None
         )
 
@@ -1422,6 +1422,7 @@ def main():
         r["accounts_receivable_fy2020_baseline"] = fy2020.get("accounts_receivable")
         r["inventory_fy2020_baseline"] = fy2020.get("inventory")
         r["accounts_payable_fy2020_baseline"] = fy2020.get("accounts_payable")
+        r["total_debt_fy2020_baseline"] = fy2020.get("total_debt")
 
     validate(records)
 
